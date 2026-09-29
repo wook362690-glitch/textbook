@@ -1,0 +1,574 @@
+<title>교과서 제작 공정판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 상단 탭 바 + 단일 작업 영역. 인쇄 교정지처럼 차가운 종이 바탕에 공정 시안(cyan)을 강조색으로, 지연은 교정용 빨간 펜 색으로 표시 */
+:root {
+  --paper: #f5f7fa;
+  --surface: #ffffff;
+  --sunken: #edf0f4;
+  --ink: #16202c;
+  --ink-2: #4c5869;
+  --ink-3: #7a8596;
+  --line: #dce1e8;
+  --cyan: #08769b;
+  --cyan-soft: #e1f0f6;
+  --ok: #2c8653;
+  --warn: #a86d12;
+  --crit: #c4303a;
+  --wait: #c9d0da;
+  --font-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f141a; --surface: #161d26; --sunken: #1d2631; --ink: #e5eaf1; --ink-2: #a3aebd; --ink-3: #75808f;
+    --line: #2a3441; --cyan: #4db6da; --cyan-soft: #15303c; --ok: #5dc28b; --warn: #e2a84b; --crit: #ef6a72; --wait: #3a4553;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f141a; --surface: #161d26; --sunken: #1d2631; --ink: #e5eaf1; --ink-2: #a3aebd; --ink-3: #75808f;
+  --line: #2a3441; --cyan: #4db6da; --cyan-soft: #15303c; --ok: #5dc28b; --warn: #e2a84b; --crit: #ef6a72; --wait: #3a4553;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 400 14px/1.6 var(--font-body); margin: 0; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+h1 { font-size: 18px; font-weight: 700; }
+h2 { font-size: 20px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 600; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 11px; letter-spacing: .08em; color: var(--ink-3); font-weight: 500; }
+.muted { color: var(--ink-2); }
+
+/* 상단 바 */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-inner { max-width: 1180px; margin: 0 auto; padding: 12px 16px 0; display: flex; flex-wrap: wrap; align-items: end; gap: 8px 24px; }
+.brand { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; }
+.reg { width: 18px; height: 18px; flex: none; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; }
+.tab { border: 0; background: none; padding: 8px 12px 11px; color: var(--ink-2); border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; }
+.tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--cyan); }
+.tab:hover { color: var(--ink); }
+
+main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 20px; }
+.notice { font-size: 12.5px; color: var(--ink-2); background: var(--sunken); border-radius: var(--radius); padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between; }
+.link-btn { border: 0; background: none; color: var(--cyan); padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; }
+.panel > h3 { margin-bottom: 12px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+
+/* 요약 수치 */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 2px; }
+.kpi .v { font: 600 28px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--ink-2); font-size: 13px; }
+.kpi.crit .v { color: var(--crit); }
+.kpi.warn .v { color: var(--warn); }
+
+/* 단계 분포 막대 */
+.dist { display: grid; grid-template-columns: max-content 1fr 2.5em; gap: 6px 12px; align-items: center; }
+.dist .n { font-size: 13px; color: var(--ink-2); }
+.dist .track { height: 14px; background: var(--sunken); border-radius: 3px; overflow: hidden; }
+.dist .fill { height: 100%; background: var(--cyan); border-radius: 3px; }
+.dist .c { text-align: right; }
+
+/* 상태 표시 */
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid currentColor; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.s-완료 { color: var(--ok); } .s-진행 { color: var(--cyan); } .s-보류 { color: var(--warn); } .s-반려 { color: var(--crit); } .s-대기 { color: var(--ink-3); }
+.h-지연 { color: var(--crit); } .h-위험 { color: var(--warn); } .h-정상 { color: var(--ok); }
+.c-허락완료 { color: var(--ok); } .c-협의중 { color: var(--warn); } .c-미처리 { color: var(--crit); }
+
+.list { display: grid; }
+.row-btn { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; padding: 10px 2px; }
+.row-btn:first-child { border-top: 0; }
+.row-btn:hover .t { color: var(--cyan); }
+.row-btn .t { font-weight: 500; }
+.row-btn .sub { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-2); }
+.empty { color: var(--ink-3); padding: 8px 2px; }
+
+/* 공정 맵 */
+.flow { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; counter-reset: st; }
+.stage-card { position: relative; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 4px; align-content: start; min-height: 108px; }
+.stage-card:hover { border-color: var(--cyan); }
+.stage-card[aria-pressed="true"] { border-color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); background: var(--cyan-soft); }
+.stage-card .no { font: 500 12px var(--font-mono); color: var(--ink-3); }
+.stage-card .nm { font: 600 16px var(--font-display); }
+.stage-card .meta { font-size: 12.5px; color: var(--ink-2); }
+.stage-card .loop { font-size: 12px; color: var(--warn); }
+.stage-card .cnt { position: absolute; top: 10px; right: 12px; font: 500 12px var(--font-mono); color: var(--cyan); }
+.detail { display: grid; gap: 14px; }
+.detail dl { display: grid; grid-template-columns: 7em 1fr; gap: 8px 14px; margin: 0; }
+.detail dt { color: var(--ink-3); font-size: 13px; }
+.detail dd { margin: 0; min-width: 0; }
+.detail ul { margin: 0; padding-left: 1.1em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--sunken); border-radius: 4px; padding: 2px 8px; font-size: 13px; }
+button.chip:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* 필터·표 */
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; }
+.field { display: grid; gap: 3px; font-size: 12px; color: var(--ink-3); }
+.field select, .field input { border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 6px 8px; font-size: 13.5px; color: var(--ink); min-width: 120px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { text-align: left; font-weight: 500; color: var(--ink-3); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr.clickable { cursor: pointer; }
+tbody tr.clickable:hover { background: var(--sunken); }
+tbody tr.clickable:hover .t { color: var(--cyan); }
+.t { font-weight: 500; }
+.segs { display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; width: 176px; }
+.seg { height: 10px; border-radius: 2px; background: var(--wait); }
+.seg.완료 { background: var(--ok); } .seg.진행 { background: var(--cyan); } .seg.보류 { background: var(--warn); } .seg.반려 { background: var(--crit); }
+.seg-label { font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+
+/* 교과서 상세 */
+.back { border: 0; background: none; color: var(--cyan); padding: 0; justify-self: start; }
+.head-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--ink-2); font-size: 13px; }
+.stepper { display: grid; grid-template-columns: repeat(11, minmax(64px, 1fr)); gap: 4px; min-width: 740px; }
+.step { display: grid; gap: 6px; font-size: 12px; text-align: center; color: var(--ink-2); }
+.step .bar { height: 6px; border-radius: 3px; background: var(--wait); }
+.step.완료 .bar { background: var(--ok); } .step.진행 .bar { background: var(--cyan); } .step.보류 .bar { background: var(--warn); } .step.반려 .bar { background: var(--crit); }
+.step.cur { color: var(--ink); font-weight: 700; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 6px 12px; font-size: 13.5px; }
+.btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primary { background: var(--cyan); border-color: var(--cyan); color: var(--surface); }
+.btn.primary:hover:not(:disabled) { color: var(--surface); filter: brightness(1.08); }
+.saved { font-size: 12.5px; color: var(--ok); }
+
+/* 간트 */
+.gantt { display: grid; grid-template-columns: 7.5em 1fr; gap: 6px 10px; min-width: 700px; align-items: center; font-size: 12.5px; }
+.gantt .lane { position: relative; height: 22px; background: var(--sunken); border-radius: 3px; }
+.gantt .plan { position: absolute; top: 3px; height: 7px; border-radius: 2px; background: var(--wait); }
+.gantt .act { position: absolute; top: 12px; height: 7px; border-radius: 2px; background: var(--ok); }
+.gantt .act.진행 { background: var(--cyan); } .gantt .act.보류 { background: var(--warn); } .gantt .act.반려 { background: var(--crit); }
+.gantt .today { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.5px dashed var(--crit); }
+.gantt .axis { position: relative; height: 18px; font: 11px var(--font-mono); color: var(--ink-3); }
+.gantt .axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--ink-2); margin-top: 10px; }
+.legend i { display: inline-block; width: 14px; height: 7px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+
+@media (max-width: 560px) {
+  .detail dl { grid-template-columns: 1fr; gap: 2px; }
+  .detail dd { margin-bottom: 8px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fill, .seg, .step .bar { transition: background-color .2s, width .3s; }
+}
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <svg class="reg" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="none" stroke="var(--cyan)" stroke-width="1.5"/><path d="M10 0v20M0 10h20" stroke="var(--ink)" stroke-width="1.2" fill="none"/></svg>
+      <h1>교과서 제작 공정판</h1>
+    </div>
+    <nav class="tabs" aria-label="화면">
+      <button class="tab" data-go="dashboard">대시보드</button>
+      <button class="tab" data-go="map">공정 맵</button>
+      <button class="tab" data-go="books">교과서</button>
+      <button class="tab" data-go="copyright">저작권</button>
+    </nav>
+  </div>
+</header>
+<main id="app"></main>
+
+<script>
+// ─── 공정 템플릿 (docs/README.md 2장) ───
+const STAGES = [
+  { name: '기획', days: 60, tasks: ['교육과정·집필 기준·검정 기준 분석', '집필진 구성과 계약', '개발 계획 수립'], outputs: ['개발 계획서', '집필진 계약서'], gate: '내부 기획 승인', note: '교육부 교과용 도서 개발 공고와 편찬상의 유의점을 기준으로 한다.' },
+  { name: '집필', days: 180, tasks: ['단원 구성안 작성', '견본 단원 집필', '원고 집필', '내부 검토와 감수'], outputs: ['원고', '감수 의견서'], gate: '원고 확정', note: '대표 저자와 공동 저자가 나누어 집필하고 편집부가 일정과 분량을 관리한다.' },
+  { name: '편집·디자인', days: 120, tasks: ['원고 편집', '삽화·사진 제작', '조판', '교정 1교~3교'], outputs: ['조판 파일', '교정지'], gate: '최종 교정 완료', note: '저작권 처리와 병행한다. 교정 차수마다 수정 대조표를 남긴다.' },
+  { name: '저작권 처리', days: 90, tasks: ['인용 텍스트·이미지 목록화', '권리자 확인과 사용 허락 확보', '출처 표기 점검'], outputs: ['저작권 목록', '사용 허락서'], gate: '미처리 항목 0건', note: '심사본 제출 전에 모든 인용 자료의 허락을 확보해야 한다.' },
+  { name: '검정 심사', days: 120, tasks: ['심사본 제출', '기초 조사', '본심사 대응'], outputs: ['심사본', '심사 결과 통보서'], gate: '합격 또는 조건부 합격', note: '검정 도서는 교육부가 위탁한 심사 기관이, 인정 도서는 시·도 교육청이 심사한다. 기관과 일정은 해당 연도 공고를 따른다.', loop: '조건부 합격이면 수정·보완으로 이동' },
+  { name: '수정·보완', days: 60, tasks: ['수정·보완 권고 사항 반영', '수정 대조표 작성', '재제출'], outputs: ['수정 대조표', '수정본'], gate: '최종 합격', note: '권고 사항을 모두 반영했는지 확인받은 뒤 최종 합격이 확정된다.', loop: '재심사 결과에 따라 검정 심사로 복귀' },
+  { name: '전시·선정', days: 45, tasks: ['전시본 제작', '홍보 자료 배포', '학교별 선정 대응'], outputs: ['전시본', '홍보물'], gate: '선정 기간 종료', note: '학교는 교과서 전시 후 학교운영위원회 심의를 거쳐 교과서를 선정한다.' },
+  { name: '주문·가격', days: 60, tasks: ['주문 수량 집계', '가격 신고', '가격 확정'], outputs: ['주문 집계표', '확정 가격'], gate: '수량·가격 확정', note: '검인정 교과서 가격은 발행사 신고 후 정부 절차를 거쳐 확정된다.' },
+  { name: '인쇄·제작', days: 75, tasks: ['인쇄용 파일 출력', '인쇄·제본', '품질 검사'], outputs: ['완성본', '품질 검사 기록'], gate: '품질 검사 통과', note: '공급 일정에 맞춰 인쇄 대수와 제본 일정을 확정한다.' },
+  { name: '공급', days: 45, tasks: ['공급 계획 수립', '지역 총판 배송', '학교 도착 확인'], outputs: ['배송 완료 내역'], gate: '공급 완료', note: '공급은 교과서 공급 기관과 지역 총판을 거쳐 학교로 전달된다.' },
+  { name: '사후 관리', days: 365, tasks: ['오류 수정과 정오표 배포', '수정 요청 대응', '2차 활용 사용 허락'], outputs: ['정오표', '사용 허락 계약서'], gate: '사용 기간 종료', note: '교과서 사용 기간 동안 오류 수정과 외부 이용 문의에 대응한다.' },
+];
+const STATUSES = ['진행', '보류', '반려'];
+
+// ─── 예시 데이터 (실제 교과서 정보가 아님) ───
+const SEED = [
+  { id: 'b01', title: '중학교 수학 1', level: '중학교', type: '검정', pm: '김서연', stage: 8, status: '진행', end: '2026-11-20' },
+  { id: 'b02', title: '고등학교 공통국어1', level: '고등학교', type: '검정', pm: '박준호', stage: 6, status: '진행', end: '2026-10-05' },
+  { id: 'b03', title: '고등학교 통합사회1', level: '고등학교', type: '검정', pm: '이하은', stage: 5, status: '진행', end: '2026-09-18' },
+  { id: 'b04', title: '중학교 과학 2', level: '중학교', type: '검정', pm: '정민재', stage: 4, status: '진행', end: '2026-12-15' },
+  { id: 'b05', title: '고등학교 정보', level: '고등학교', type: '인정', pm: '최유진', stage: 3, status: '보류', end: '2026-10-30' },
+  { id: 'b06', title: '중학교 영어 3', level: '중학교', type: '검정', pm: '한지우', stage: 2, status: '진행', end: '2027-01-31' },
+  { id: 'b07', title: '고등학교 한국사1', level: '고등학교', type: '검정', pm: '윤도현', stage: 10, status: '진행', end: '2027-02-28' },
+  { id: 'b08', title: '초등학교 사회 3-1', level: '초등학교', type: '검정', pm: '강소희', stage: 1, status: '진행', end: '2026-09-25' },
+  { id: 'b09', title: '고등학교 확률과 통계', level: '고등학교', type: '검정', pm: '오세훈', stage: 9, status: '진행', end: '2026-10-20' },
+  { id: 'b10', title: '중학교 기술·가정 1', level: '중학교', type: '검정', pm: '서예린', stage: 0, status: '진행', end: '2026-11-10' },
+];
+const COPYRIGHT = [
+  { book: 'b05', kind: '이미지', item: '데이터센터 내부 사진', holder: '사진 에이전시 A', status: '미처리', fee: 0, until: '' },
+  { book: 'b05', kind: '텍스트', item: '알고리즘 해설 인용문', holder: '출판사 B', status: '협의중', fee: 150000, until: '' },
+  { book: 'b05', kind: '이미지', item: '프로그래밍 언어 로고 3종', holder: '각 권리자', status: '미처리', fee: 0, until: '' },
+  { book: 'b05', kind: '이미지', item: '네트워크 구성도', holder: '개인 작가 C', status: '허락완료', fee: 80000, until: '2031-02-28' },
+  { book: 'b06', kind: '텍스트', item: '영문 단편 소설 발췌', holder: '해외 에이전시 D', status: '협의중', fee: 420000, until: '' },
+  { book: 'b06', kind: '음원', item: '듣기 평가용 팝송 1곡', holder: '음원 관리 단체 E', status: '미처리', fee: 0, until: '' },
+  { book: 'b06', kind: '이미지', item: '런던 거리 사진', holder: '사진 에이전시 A', status: '허락완료', fee: 120000, until: '2031-02-28' },
+  { book: 'b04', kind: '이미지', item: '세포 전자현미경 사진', holder: '연구소 F', status: '허락완료', fee: 200000, until: '2031-02-28' },
+  { book: 'b04', kind: '지도', item: '판 구조 지도', holder: '지도 제작사 G', status: '허락완료', fee: 180000, until: '2031-02-28' },
+  { book: 'b03', kind: '텍스트', item: '신문 사설 발췌', holder: '신문사 H', status: '허락완료', fee: 100000, until: '2030-02-28' },
+  { book: 'b03', kind: '이미지', item: '국제 회의 보도 사진', holder: '통신사 I', status: '허락완료', fee: 150000, until: '2030-02-28' },
+  { book: 'b02', kind: '텍스트', item: '현대 시 1편 전문', holder: '작가 유족 J', status: '허락완료', fee: 300000, until: '2030-02-28' },
+  { book: 'b02', kind: '텍스트', item: '수필 1편 발췌', holder: '출판사 K', status: '허락완료', fee: 200000, until: '2030-02-28' },
+  { book: 'b07', kind: '이미지', item: '유물 사진 12점', holder: '박물관 L', status: '허락완료', fee: 360000, until: '2026-12-31' },
+  { book: 'b07', kind: '텍스트', item: '독립운동 사료 번역문', holder: '연구소 M', status: '허락완료', fee: 90000, until: '2026-11-15' },
+  { book: 'b01', kind: '이미지', item: '건축물 사진 (대칭 단원)', holder: '사진 에이전시 A', status: '허락완료', fee: 110000, until: '2030-02-28' },
+];
+
+// ─── 날짜 ───
+const DAY = 86400000;
+const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const add = (d, n) => new Date(d.getTime() + n * DAY);
+const diff = (a, b) => Math.round((a - b) / DAY);
+const fmt = d => d ? `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}` : '–';
+const fmtYM = d => `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+// 현재 단계의 계획 종료일을 기준으로 앞뒤 단계 계획 일정을 만든다
+function buildPlan(seed, idx) {
+  const plan = [];
+  let end = parse(seed.end);
+  plan[seed.stage] = { start: add(end, -STAGES[seed.stage].days), end };
+  for (let i = seed.stage - 1; i >= 0; i--) plan[i] = { start: add(plan[i + 1].start, -STAGES[i].days), end: plan[i + 1].start };
+  for (let i = seed.stage + 1; i < STAGES.length; i++) plan[i] = { start: plan[i - 1].end, end: add(plan[i - 1].end, STAGES[i].days) };
+  // 실제 일정: 계획 대비 조금씩 밀리거나 당겨진 예시 값
+  plan.forEach((p, i) => { p.slip = ((i * 7 + idx * 3) % 13) - 4; });
+  return plan;
+}
+
+const STORE_KEY = 'textbook-process-v1';
+function loadOverrides() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; } }
+function saveOverrides(o) { try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); return true; } catch { return false; } }
+let overrides = loadOverrides();
+
+const BOOKS = SEED.map((s, i) => ({ ...s, plan: buildPlan(s, i) }));
+
+function state(book) {
+  const o = overrides[book.id] || {};
+  const stage = o.stage ?? book.stage;
+  const status = o.status ?? book.status;
+  const stages = STAGES.map((def, i) => {
+    const p = book.plan[i];
+    const st = i < stage ? '완료' : i === stage ? status : '대기';
+    const actStart = i <= stage ? add(p.start, p.slip) : null;
+    const actEnd = i < stage ? add(p.end, p.slip) : null;
+    return { i, def, st, plan: p, actStart, actEnd };
+  });
+  const cur = stages[stage];
+  const left = diff(cur.plan.end, today);
+  let health = '정상';
+  if (left < 0) health = '지연';
+  else if (left < STAGES[stage].days * 0.2) health = '위험';
+  return { stage, status, stages, cur, left, health };
+}
+
+// ─── 공통 조각 ───
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pill = (text, cls) => `<span class="pill ${cls}">${esc(text)}</span>`;
+const segs = s => `<div class="segs" aria-hidden="true">${s.stages.map(x => `<span class="seg ${x.st}"></span>`).join('')}</div>`;
+const leftText = s => s.left < 0 ? `${-s.left}일 지남` : `${s.left}일 남음`;
+const bookById = id => BOOKS.find(b => b.id === id);
+const cpCounts = id => COPYRIGHT.filter(c => c.book === id).reduce((a, c) => (a[c.status]++, a), { 허락완료: 0, 협의중: 0, 미처리: 0 });
+
+const notice = `<div class="notice"><span>화면의 교과서와 일정은 <b>예시 데이터</b>입니다. 단계 변경 내용은 이 브라우저에만 저장됩니다.</span>${Object.keys(overrides).length ? '<button class="link-btn" data-act="reset">예시 데이터로 되돌리기</button>' : ''}</div>`;
+
+// ─── 대시보드 ───
+function viewDashboard() {
+  const all = BOOKS.map(b => ({ b, s: state(b) }));
+  const active = all.filter(x => x.s.stage < 10);
+  const late = all.filter(x => x.s.health === '지연');
+  const risk = all.filter(x => x.s.health === '위험');
+  const held = all.filter(x => x.s.status !== '진행');
+  const cpTodo = COPYRIGHT.filter(c => c.status !== '허락완료').length;
+  const counts = STAGES.map((_, i) => all.filter(x => x.s.stage === i).length);
+  const max = Math.max(1, ...counts);
+  const attention = [...late, ...risk, ...held.filter(x => x.s.health === '정상')];
+  const soon = all.filter(x => x.s.left >= 0 && x.s.left <= 45).sort((a, b) => a.s.left - b.s.left);
+
+  return `${notice}
+  <section class="kpis">
+    <div class="kpi"><span class="v">${active.length}</span><span class="l">개발·공급 중인 교과서</span></div>
+    <div class="kpi crit"><span class="v">${late.length}</span><span class="l">일정 지연</span></div>
+    <div class="kpi warn"><span class="v">${risk.length}</span><span class="l">마감 임박 (잔여 20% 미만)</span></div>
+    <div class="kpi ${cpTodo ? 'warn' : ''}"><span class="v">${cpTodo}</span><span class="l">미해결 저작권 항목</span></div>
+  </section>
+  <div class="grid-2">
+    <section class="panel">
+      <h3>확인이 필요한 교과서</h3>
+      <div class="list">${attention.length ? attention.map(({ b, s }) => `
+        <button class="row-btn" data-book="${b.id}">
+          <span class="t">${esc(b.title)}</span>
+          ${s.status !== '진행' ? pill(s.status, 's-' + s.status) : pill(s.health, 'h-' + s.health)}
+          <span class="sub">${s.cur.def.name} · 계획 종료 <span class="mono">${fmt(s.cur.plan.end)}</span> · ${leftText(s)}</span>
+        </button>`).join('') : '<p class="empty">지연되거나 멈춘 교과서가 없습니다.</p>'}</div>
+    </section>
+    <section class="panel">
+      <h3>단계별 교과서 수</h3>
+      <div class="dist">${STAGES.map((st, i) => `
+        <span class="n">${i + 1}. ${st.name}</span>
+        <div class="track"><div class="fill" style="width:${counts[i] / max * 100}%"></div></div>
+        <span class="c num">${counts[i]}</span>`).join('')}
+      </div>
+    </section>
+  </div>
+  <section class="panel">
+    <h3>45일 안에 끝나는 단계</h3>
+    <div class="list">${soon.length ? soon.map(({ b, s }) => `
+      <button class="row-btn" data-book="${b.id}">
+        <span class="t">${esc(b.title)} <span class="muted">· ${s.cur.def.name}</span></span>
+        <span class="mono">${fmt(s.cur.plan.end)}</span>
+        <span class="sub">게이트: ${esc(s.cur.def.gate)} · ${leftText(s)} · 담당 ${esc(b.pm)}</span>
+      </button>`).join('') : '<p class="empty">45일 안에 끝나는 단계가 없습니다.</p>'}</div>
+  </section>`;
+}
+
+// ─── 공정 맵 ───
+let selectedStage = 0;
+function viewMap() {
+  const all = BOOKS.map(b => ({ b, s: state(b) }));
+  const st = STAGES[selectedStage];
+  const here = all.filter(x => x.s.stage === selectedStage);
+  return `
+  <div class="head-row"><h2>검인정 교과서 제작 공정</h2><span class="muted">단계를 누르면 작업, 산출물, 게이트를 볼 수 있습니다.</span></div>
+  <section class="flow">${STAGES.map((s, i) => {
+    const n = all.filter(x => x.s.stage === i).length;
+    return `<button class="stage-card" data-stage="${i}" aria-pressed="${i === selectedStage}">
+      <span class="no">${String(i + 1).padStart(2, '0')}</span>
+      <span class="nm">${s.name}</span>
+      <span class="meta">기본 ${s.days}일 · ${s.gate}</span>
+      ${s.loop ? `<span class="loop">↺ ${s.loop}</span>` : ''}
+      ${n ? `<span class="cnt" title="이 단계에 있는 교과서 수">${n}권</span>` : ''}
+    </button>`;
+  }).join('')}</section>
+  <section class="panel detail">
+    <div class="head-row"><span class="eyebrow">단계 ${selectedStage + 1} / ${STAGES.length}</span><h2>${st.name}</h2></div>
+    <dl>
+      <dt>주요 작업</dt><dd><ul>${st.tasks.map(t => `<li>${t}</li>`).join('')}</ul></dd>
+      <dt>산출물</dt><dd><div class="chips">${st.outputs.map(o => `<span class="chip">${o}</span>`).join('')}</div></dd>
+      <dt>게이트</dt><dd>${st.gate}</dd>
+      <dt>기본 소요</dt><dd><span class="num">${st.days}</span>일</dd>
+      <dt>참고</dt><dd class="muted">${st.note}</dd>
+      <dt>현재 교과서</dt><dd>${here.length ? `<div class="chips">${here.map(({ b, s }) => `<button class="chip" data-book="${b.id}">${esc(b.title)}${s.health !== '정상' ? ` · ${s.health}` : ''}</button>`).join('')}</div>` : '<span class="muted">이 단계에 있는 교과서가 없습니다.</span>'}</dd>
+    </dl>
+  </section>`;
+}
+
+// ─── 교과서 목록 ───
+const filters = { q: '', level: '', type: '', stage: '', health: '' };
+function viewBooks() {
+  const rows = BOOKS.map(b => ({ b, s: state(b) })).filter(({ b, s }) =>
+    (!filters.q || b.title.includes(filters.q) || b.pm.includes(filters.q)) &&
+    (!filters.level || b.level === filters.level) &&
+    (!filters.type || b.type === filters.type) &&
+    (filters.stage === '' || s.stage === +filters.stage) &&
+    (!filters.health || s.health === filters.health));
+  const opt = (v, label, cur) => `<option value="${v}" ${String(cur) === String(v) ? 'selected' : ''}>${label}</option>`;
+  return `${notice}
+  <div class="filters">
+    <label class="field">검색<input id="f-q" type="search" placeholder="교과서명, 담당자" value="${esc(filters.q)}"></label>
+    <label class="field">학교급<select id="f-level">${opt('', '전체', filters.level)}${['초등학교', '중학교', '고등학교'].map(v => opt(v, v, filters.level)).join('')}</select></label>
+    <label class="field">도서 구분<select id="f-type">${opt('', '전체', filters.type)}${opt('검정', '검정', filters.type)}${opt('인정', '인정', filters.type)}</select></label>
+    <label class="field">현재 단계<select id="f-stage">${opt('', '전체', filters.stage)}${STAGES.map((s, i) => opt(i, `${i + 1}. ${s.name}`, filters.stage)).join('')}</select></label>
+    <label class="field">일정<select id="f-health">${opt('', '전체', filters.health)}${['지연', '위험', '정상'].map(v => opt(v, v, filters.health)).join('')}</select></label>
+  </div>
+  <section class="panel" style="padding:0">
+    <div class="table-wrap"><table>
+      <thead><tr><th>교과서</th><th>구분</th><th>진행</th><th>상태</th><th>현재 단계 종료</th><th>담당</th></tr></thead>
+      <tbody>${rows.length ? rows.map(({ b, s }) => `
+        <tr class="clickable" data-book="${b.id}" tabindex="0">
+          <td><span class="t">${esc(b.title)}</span></td>
+          <td>${b.type}</td>
+          <td>${segs(s)}<div class="seg-label">${s.stage + 1}. ${s.cur.def.name}</div></td>
+          <td>${s.status !== '진행' ? pill(s.status, 's-' + s.status) : pill(s.health, 'h-' + s.health)}</td>
+          <td><span class="mono">${fmt(s.cur.plan.end)}</span><div class="seg-label">${leftText(s)}</div></td>
+          <td>${esc(b.pm)}</td>
+        </tr>`).join('') : `<tr><td colspan="6" class="empty">조건에 맞는 교과서가 없습니다. 필터를 바꿔 보세요.</td></tr>`}
+      </tbody>
+    </table></div>
+  </section>`;
+}
+
+// ─── 교과서 상세 ───
+let savedFlash = '';
+function viewBook(id) {
+  const b = bookById(id);
+  if (!b) return `<p class="empty">교과서를 찾을 수 없습니다.</p>`;
+  const s = state(b);
+  const cp = cpCounts(b.id);
+  const reviews = [];
+  if (s.stage >= 4) reviews.push({ round: '기초 조사', result: '통과', date: add(s.stages[4].plan.start, 30 + s.stages[4].plan.slip) });
+  if (s.stage >= 5) reviews.push({ round: '본심사', result: '조건부 합격', note: `수정·보완 권고 ${7 + b.id.charCodeAt(2) % 9}건`, date: add(s.stages[4].plan.end, s.stages[4].plan.slip) });
+  if (s.stage >= 6) reviews.push({ round: '수정·보완 확인', result: '최종 합격', date: add(s.stages[5].plan.end, s.stages[5].plan.slip) });
+
+  // 간트 축
+  const t0 = s.stages[0].plan.start, t1 = s.stages[10].plan.end;
+  const span = t1 - t0;
+  const pos = d => ((d - t0) / span * 100).toFixed(2);
+  const ticks = [];
+  for (let d = new Date(t0.getFullYear(), t0.getMonth() + 1, 1); d < t1; d = new Date(d.getFullYear(), d.getMonth() + 4, 1)) ticks.push(d);
+  const todayIn = today >= t0 && today <= t1;
+  const todayLine = todayIn ? `<span class="today" style="left:${pos(today)}%"></span>` : '';
+
+  return `
+  <button class="back" data-go="books">← 교과서 목록</button>
+  <section class="panel detail">
+    <div class="head-row">
+      <h2>${esc(b.title)}</h2>
+      ${s.status !== '진행' ? pill(s.status, 's-' + s.status) : pill(s.health, 'h-' + s.health)}
+    </div>
+    <div class="facts"><span>${b.level}</span><span>${b.type} 도서</span><span>2022 개정 교육과정</span><span>담당 ${esc(b.pm)}</span><span>공급 목표 <span class="mono">${fmt(s.stages[9].plan.end)}</span></span></div>
+    <div class="table-wrap"><div class="stepper">${s.stages.map(x => `
+      <div class="step ${x.st} ${x.i === s.stage ? 'cur' : ''}" title="${x.def.name}: ${x.st}"><span class="bar"></span><span>${x.def.name}</span></div>`).join('')}
+    </div></div>
+    <div class="controls">
+      <button class="btn" data-act="prev" ${s.stage === 0 ? 'disabled' : ''}>이전 단계로</button>
+      <label class="field">현재 단계 상태<select id="status-sel">${STATUSES.map(v => `<option ${v === s.status ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <button class="btn primary" data-act="next" ${s.stage === STAGES.length - 1 ? 'disabled' : ''}>${s.stage < STAGES.length - 1 ? `게이트 통과, ${STAGES[s.stage + 1].name}로` : '마지막 단계'}</button>
+      ${savedFlash ? `<span class="saved" role="status">${savedFlash}</span>` : ''}
+    </div>
+    <dl>
+      <dt>현재 단계</dt><dd><b>${s.stage + 1}. ${s.cur.def.name}</b> · 계획 <span class="mono">${fmt(s.cur.plan.start)} – ${fmt(s.cur.plan.end)}</span> · ${leftText(s)}</dd>
+      <dt>게이트</dt><dd>${s.cur.def.gate}</dd>
+      <dt>할 일</dt><dd><ul>${s.cur.def.tasks.map(t => `<li>${t}</li>`).join('')}</ul></dd>
+      <dt>산출물</dt><dd><div class="chips">${s.cur.def.outputs.map(o => `<span class="chip">${o}</span>`).join('')}</div></dd>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <h3>일정</h3>
+    <div class="table-wrap"><div class="gantt">
+      <span></span><div class="axis">${ticks.map(d => `<span style="left:${pos(d)}%">${fmtYM(d)}</span>`).join('')}</div>
+      ${s.stages.map(x => `
+        <span class="${x.i === s.stage ? 't' : 'muted'}">${x.def.name}</span>
+        <div class="lane" title="계획 ${fmt(x.plan.start)} – ${fmt(x.plan.end)}${x.actStart ? ` / 실제 ${fmt(x.actStart)} – ${x.actEnd ? fmt(x.actEnd) : '진행 중'}` : ''}">
+          <span class="plan" style="left:${pos(x.plan.start)}%;width:${(pos(x.plan.end) - pos(x.plan.start)).toFixed(2)}%"></span>
+          ${x.actStart ? `<span class="act ${x.st}" style="left:${pos(x.actStart)}%;width:${Math.max(0.4, pos(x.actEnd || (today > x.actStart ? today : x.actStart)) - pos(x.actStart)).toFixed(2)}%"></span>` : ''}
+          ${todayLine}
+        </div>`).join('')}
+    </div></div>
+    <div class="legend"><span><i style="background:var(--wait)"></i>계획</span><span><i style="background:var(--ok)"></i>실제(완료)</span><span><i style="background:var(--cyan)"></i>실제(진행 중)</span><span><i style="border-left:1.5px dashed var(--crit);border-radius:0;width:2px"></i>오늘</span></div>
+  </section>
+
+  <div class="grid-2">
+    <section class="panel">
+      <h3>심사 이력</h3>
+      ${reviews.length ? `<div class="table-wrap"><table><thead><tr><th>차수</th><th>결과</th><th>일자</th></tr></thead><tbody>${reviews.map(r => `
+        <tr><td>${r.round}${r.note ? `<div class="seg-label">${r.note}</div>` : ''}</td><td>${pill(r.result, r.result === '조건부 합격' ? 'h-위험' : 'h-정상')}</td><td class="mono">${fmt(r.date)}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="empty">아직 검정 심사 단계에 이르지 않았습니다.</p>'}
+    </section>
+    <section class="panel">
+      <h3>저작권</h3>
+      <div class="facts" style="margin-bottom:10px">${pill(`허락 완료 ${cp.허락완료}`, 'c-허락완료')} ${pill(`협의 중 ${cp.협의중}`, 'c-협의중')} ${pill(`미처리 ${cp.미처리}`, 'c-미처리')}</div>
+      ${COPYRIGHT.filter(c => c.book === b.id).length ? `<button class="link-btn" data-go="copyright" data-cpbook="${b.id}">이 교과서의 저작권 항목 보기</button>` : '<p class="empty">등록된 저작권 항목이 없습니다.</p>'}
+    </section>
+  </div>`;
+}
+
+// ─── 저작권 ───
+const cpFilter = { book: '', status: '' };
+function viewCopyright() {
+  const rows = COPYRIGHT.filter(c => (!cpFilter.book || c.book === cpFilter.book) && (!cpFilter.status || c.status === cpFilter.status));
+  const expiring = COPYRIGHT.filter(c => c.until && diff(parse(c.until), today) <= 90);
+  const opt = (v, label, cur) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${label}</option>`;
+  const statusLabel = { 허락완료: '허락 완료', 협의중: '협의 중', 미처리: '미처리' };
+  return `${notice}
+  ${expiring.length ? `<section class="panel"><h3>90일 안에 만료되는 사용 허락</h3><div class="list">${expiring.map(c => `
+    <button class="row-btn" data-book="${c.book}"><span class="t">${esc(c.item)}</span><span class="mono h-위험">${fmt(parse(c.until))}</span>
+    <span class="sub">${esc(bookById(c.book).title)} · ${esc(c.holder)} · ${diff(parse(c.until), today)}일 남음</span></button>`).join('')}</div></section>` : ''}
+  <div class="filters">
+    <label class="field">교과서<select id="cp-book">${opt('', '전체', cpFilter.book)}${BOOKS.filter(b => COPYRIGHT.some(c => c.book === b.id)).map(b => opt(b.id, b.title, cpFilter.book)).join('')}</select></label>
+    <label class="field">처리 상태<select id="cp-status">${opt('', '전체', cpFilter.status)}${Object.keys(statusLabel).map(k => opt(k, statusLabel[k], cpFilter.status)).join('')}</select></label>
+  </div>
+  <section class="panel" style="padding:0"><div class="table-wrap"><table>
+    <thead><tr><th>자료</th><th>유형</th><th>교과서</th><th>권리자</th><th>상태</th><th style="text-align:right">사용료(원)</th><th>허락 기간</th></tr></thead>
+    <tbody>${rows.length ? rows.map(c => `
+      <tr class="clickable" data-book="${c.book}" tabindex="0">
+        <td><span class="t">${esc(c.item)}</span></td><td>${c.kind}</td><td>${esc(bookById(c.book).title)}</td><td>${esc(c.holder)}</td>
+        <td>${pill(statusLabel[c.status], 'c-' + c.status)}</td>
+        <td class="num" style="text-align:right">${c.fee ? c.fee.toLocaleString('ko-KR') : '–'}</td>
+        <td class="mono">${c.until ? '~ ' + fmt(parse(c.until)) : '–'}</td>
+      </tr>`).join('') : '<tr><td colspan="7" class="empty">조건에 맞는 저작권 항목이 없습니다.</td></tr>'}
+    </tbody></table></div></section>`;
+}
+
+// ─── 라우팅과 이벤트 ───
+const app = document.getElementById('app');
+function route() {
+  const h = location.hash.slice(1) || 'dashboard';
+  const view = h.startsWith('book-') ? 'books' : h;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-current', t.dataset.go === view ? 'page' : 'false'));
+  if (h.startsWith('book-')) app.innerHTML = viewBook(h.slice(5));
+  else if (h === 'map') app.innerHTML = viewMap();
+  else if (h === 'books') app.innerHTML = viewBooks();
+  else if (h === 'copyright') app.innerHTML = viewCopyright();
+  else app.innerHTML = viewDashboard();
+}
+function go(hash) {
+  savedFlash = '';
+  if (location.hash.slice(1) === hash) route(); else location.hash = hash;
+  window.scrollTo(0, 0);
+}
+function refocus(id) { const el = document.getElementById(id); if (el) { el.focus(); if (el.type === 'search') el.setSelectionRange(el.value.length, el.value.length); } }
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go],[data-book],[data-stage],[data-act]');
+  if (!t) return;
+  if (t.dataset.cpbook) cpFilter.book = t.dataset.cpbook;
+  if (t.dataset.go) return go(t.dataset.go);
+  if (t.dataset.stage) { selectedStage = +t.dataset.stage; route(); return; }
+  if (t.dataset.book && !t.dataset.act) return go('book-' + t.dataset.book);
+  const act = t.dataset.act;
+  if (act === 'reset') { overrides = {}; saveOverrides(overrides); route(); return; }
+  const id = location.hash.slice(6);
+  const b = bookById(id); if (!b) return;
+  const s = state(b);
+  if (act === 'next' || act === 'prev') {
+    const stage = s.stage + (act === 'next' ? 1 : -1);
+    overrides[id] = { stage, status: '진행' };
+    savedFlash = saveOverrides(overrides) ? `${STAGES[stage].name} 단계로 변경했습니다.` : '변경했지만 이 브라우저에 저장하지 못했습니다.';
+    route();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('tr[data-book]')) go('book-' + e.target.dataset.book);
+});
+document.addEventListener('input', e => {
+  const id = e.target.id;
+  if (id === 'f-q') { filters.q = e.target.value.trim(); route(); refocus('f-q'); }
+});
+document.addEventListener('change', e => {
+  const id = e.target.id;
+  const map = { 'f-level': 'level', 'f-type': 'type', 'f-stage': 'stage', 'f-health': 'health' };
+  if (map[id]) { filters[map[id]] = e.target.value; route(); refocus(id); }
+  if (id === 'cp-book') { cpFilter.book = e.target.value; route(); refocus(id); }
+  if (id === 'cp-status') { cpFilter.status = e.target.value; route(); refocus(id); }
+  if (id === 'status-sel') {
+    const bid = location.hash.slice(6); const s = state(bookById(bid));
+    overrides[bid] = { stage: s.stage, status: e.target.value };
+    savedFlash = saveOverrides(overrides) ? `상태를 '${e.target.value}'(으)로 변경했습니다.` : '변경했지만 이 브라우저에 저장하지 못했습니다.';
+    route(); refocus('status-sel');
+  }
+});
+window.addEventListener('hashchange', route);
+route();
+</script>
